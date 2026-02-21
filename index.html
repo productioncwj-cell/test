@@ -1,21 +1,21 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>점심 랜덤 추첨</title>
+  <title>같은 그림 찾기 게임</title>
   <style>
     :root {
-      --bg-1: #f6fbff;
-      --bg-2: #e4efff;
-      --card: #ffffff;
-      --primary: #1e5aa8;
-      --primary-2: #164782;
-      --text: #12243c;
-      --muted: #5f738d;
-      --line: #d8e3f2;
-      --active: #dff0ff;
-      --accent: #2f7adf;
+      --bg-a: #f4f8ff;
+      --bg-b: #dfeeff;
+      --surface: #ffffff;
+      --line: #d3e2f7;
+      --text: #1d2b43;
+      --muted: #5a6f8b;
+      --primary: #2a69d1;
+      --primary-dark: #1e4f9f;
+      --ok: #1b8b4b;
+      --card-back: #dbe7fa;
     }
 
     * { box-sizing: border-box; }
@@ -26,437 +26,366 @@
       font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
       color: var(--text);
       background:
-        radial-gradient(circle at 10% 10%, #ffe28d66 0%, transparent 35%),
-        radial-gradient(circle at 90% 10%, #7af0ff66 0%, transparent 35%),
-        radial-gradient(circle at 50% 90%, #ff8fd466 0%, transparent 38%),
-        radial-gradient(circle at top right, #d7e8ff 0%, var(--bg-1) 45%, var(--bg-2) 100%);
+        radial-gradient(circle at 15% 12%, #ffe39b88 0%, transparent 32%),
+        radial-gradient(circle at 85% 10%, #9ee7ff88 0%, transparent 30%),
+        linear-gradient(165deg, var(--bg-a), var(--bg-b));
       display: grid;
       place-items: center;
       padding: 18px;
+      position: relative;
       overflow: hidden;
-      transition: filter 180ms ease;
     }
 
-    .bg-orbs {
+    body::before {
+      content: "";
       position: fixed;
       inset: 0;
+      background-image: var(--bg-image);
+      background-size: cover;
+      background-position: center;
+      opacity: 0.6;
       pointer-events: none;
       z-index: 0;
-      overflow: hidden;
     }
 
-    .fx-canvas {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 3;
-    }
-
-    .orb {
-      position: absolute;
-      width: 18vmin;
-      aspect-ratio: 1;
-      border-radius: 50%;
-      opacity: 0.24;
-      filter: blur(2px);
-      animation: floatUp 13s linear infinite;
-    }
-
-    .orb:nth-child(1) { left: 6%; top: 70%; background: #ff6b9f; animation-delay: -2s; }
-    .orb:nth-child(2) { left: 20%; top: 88%; background: #ff9f43; animation-duration: 10s; }
-    .orb:nth-child(3) { left: 36%; top: 72%; background: #ffd93d; animation-delay: -5s; }
-    .orb:nth-child(4) { left: 52%; top: 90%; background: #32ff7e; animation-duration: 11s; }
-    .orb:nth-child(5) { left: 68%; top: 76%; background: #18dcff; animation-delay: -3s; }
-    .orb:nth-child(6) { left: 84%; top: 92%; background: #7d5fff; animation-duration: 12s; }
-
-    .card {
+    .wrap {
+      width: min(980px, 100%);
+      background: color-mix(in srgb, var(--surface) 86%, #f5f9ff);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: 0 16px 40px rgba(20, 52, 100, 0.16);
+      padding: 18px;
       position: relative;
       z-index: 1;
-      width: min(560px, 98vw);
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 20px;
-      box-shadow: 0 18px 44px rgba(28, 55, 95, 0.14);
-      padding: 22px;
-      transition: transform 200ms ease, box-shadow 200ms ease;
-      overflow: hidden;
     }
 
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
 
     h1 {
-      margin: 0 0 8px;
-      text-align: center;
-      font-size: clamp(1.5rem, 2.8vw, 2rem);
-      letter-spacing: 0.02em;
+      font-size: clamp(1.2rem, 2.4vw, 1.7rem);
+      margin: 0;
     }
 
-    p {
-      margin: 0 0 14px;
-      text-align: center;
+    .status {
       color: var(--muted);
-      font-size: 0.95rem;
-    }
-
-    .list {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      overflow: auto;
-      margin-bottom: 14px;
-      background: #ffffffd8;
-      backdrop-filter: blur(4px);
-    }
-
-    .item {
-      padding: 11px 14px;
-      border-bottom: 1px solid #edf2fa;
-      background: #fff;
-      transition: background-color 120ms ease, color 120ms ease, transform 120ms ease;
-      font-size: 1rem;
-    }
-
-    .item:last-child { border-bottom: none; }
-
-    .item.active {
-      background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 24%, #ffffff), color-mix(in srgb, var(--accent) 10%, #f4f8ff));
       font-weight: 700;
-      color: #102440;
-      transform: scale(1.02);
-      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 48%, #ffffff);
+      font-size: 0.98rem;
     }
 
-    .result {
-      text-align: center;
-      font-size: clamp(1.05rem, 2.2vw, 1.28rem);
-      font-weight: 800;
-      color: var(--primary);
-      margin: 12px 0 16px;
-      min-height: 1.8em;
-      letter-spacing: 0.01em;
-    }
-
-    .result.winner {
-      animation: winnerPop 800ms cubic-bezier(.22,1.4,.44,1) both;
-      color: #0d3f8f;
-      text-shadow: 0 0 16px #71a7ff88;
-    }
-
-    .actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
+    .controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
     }
 
     button {
       border: none;
       border-radius: 10px;
-      padding: 11px 12px;
-      font-size: 1rem;
+      padding: 10px 14px;
+      font-size: 0.95rem;
       font-weight: 700;
       cursor: pointer;
-      transition: transform 120ms ease, filter 120ms ease, box-shadow 120ms ease;
     }
 
-    button:active { transform: translateY(1px); }
-
-    #pickButton {
-      background: linear-gradient(180deg, #2f7adf, var(--primary));
+    #restartBtn {
+      background: linear-gradient(180deg, var(--primary), var(--primary-dark));
       color: #fff;
     }
 
-    #pickButton:disabled {
-      opacity: 0.74;
-      cursor: not-allowed;
-      filter: grayscale(0.1);
+    .board {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(90px, 1fr));
+      gap: 10px;
     }
 
-    #resetButton {
-      background: #ecf2fb;
-      color: var(--primary-2);
+    .tile {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      border: none;
+      padding: 0;
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      background: transparent;
+      perspective: 900px;
     }
 
-    body.rolling {
-      animation: rainbowWash 1.2s linear infinite;
-      filter: saturate(1.2);
+    .tile[disabled] {
+      cursor: default;
     }
 
-    body.rolling .card {
-      transform: scale(1.015);
-      box-shadow: 0 24px 50px rgba(15, 62, 128, 0.24);
+    .tile-inner {
+      position: absolute;
+      inset: 0;
+      transform-style: preserve-3d;
+      transition: transform 220ms ease;
     }
 
-    body.rolling #pickButton {
-      box-shadow: 0 0 18px #62b2ffcc;
-      animation: pulseBtn 420ms ease-in-out infinite;
+    .tile.flipped .tile-inner,
+    .tile.matched .tile-inner {
+      transform: rotateY(180deg);
     }
 
-    body.rolling .list {
-      box-shadow: 0 0 0 2px #8fc4ff66, 0 0 20px #8fc4ff44;
+    .tile-face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
     }
 
-    @keyframes floatUp {
-      0% { transform: translateY(16vh) scale(0.9); opacity: 0.16; }
-      50% { opacity: 0.3; }
-      100% { transform: translateY(-122vh) scale(1.22); opacity: 0; }
+    .tile-back {
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #eef4ff, var(--card-back));
+      font-weight: 900;
+      color: #44648f;
+      font-size: clamp(1rem, 2.8vw, 1.5rem);
     }
 
-    @keyframes rainbowWash {
-      0% { filter: hue-rotate(0deg) saturate(1.2); }
-      100% { filter: hue-rotate(360deg) saturate(1.2); }
+    .tile-front {
+      transform: rotateY(180deg);
+      background: #fff;
     }
 
-    @keyframes pulseBtn {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-1px) scale(1.03); }
+    .tile-front img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
 
-    @keyframes winnerPop {
-      0% { transform: scale(0.82); opacity: 0; }
-      65% { transform: scale(1.16); opacity: 1; }
-      100% { transform: scale(1); }
+    .tile.matched {
+      outline: 2px solid color-mix(in srgb, var(--ok) 45%, #ffffff);
     }
 
-    @media (max-width: 600px) {
-      .card { padding: 18px; }
-      .item { font-size: 0.94rem; }
-      .result { font-size: 1.08rem; }
-      .orb { width: 24vmin; }
+    .message {
+      margin-top: 12px;
+      font-weight: 700;
+      color: var(--primary-dark);
+      min-height: 1.2em;
+    }
+
+    @media (max-width: 760px) {
+      .board {
+        grid-template-columns: repeat(4, minmax(68px, 1fr));
+      }
     }
   </style>
 </head>
 <body>
-  <div class="bg-orbs" aria-hidden="true">
-    <span class="orb"></span>
-    <span class="orb"></span>
-    <span class="orb"></span>
-    <span class="orb"></span>
-    <span class="orb"></span>
-    <span class="orb"></span>
-  </div>
-  <canvas id="fxCanvas" class="fx-canvas" aria-hidden="true"></canvas>
-
-  <main class="card" role="application" aria-label="점심 랜덤 추첨기">
-    <h1>오늘 뭐 먹지?</h1>
-    <p>아래 항목 중 랜덤으로 하나를 선택합니다.</p>
-
-    <section id="list" class="list" aria-live="polite"></section>
-
-    <div id="result" class="result">추첨 버튼을 눌러주세요</div>
-
-    <div class="actions">
-      <button id="pickButton" type="button">추첨</button>
-      <button id="resetButton" type="button">초기화</button>
+  <main class="wrap">
+    <div class="top">
+      <h1>같은 그림 찾기 게임</h1>
+      <div class="controls">
+        <button id="restartBtn" type="button">다시 시작</button>
+      </div>
+      <div id="status" class="status">로딩 중...</div>
     </div>
+
+    <section id="board" class="board" aria-label="게임 보드"></section>
+    <div id="message" class="message"></div>
   </main>
 
   <script>
-    const options = [
-      "zip",
-      "arko",
-      "이마트",
-      "오봉집",
-      "서브웨이",
-      "김제",
-      "국보성",
-      "칼국수",
-      "부대찌개",
-      "팀장님 추천(뉴 플레이스)"
-    ];
+    const MAX_PAIRS = 10;
+    const boardEl = document.getElementById("board");
+    const statusEl = document.getElementById("status");
+    const messageEl = document.getElementById("message");
+    const restartBtn = document.getElementById("restartBtn");
 
-    const palette = [
-      "#ff5f6d",
-      "#ff9f43",
-      "#ffd93d",
-      "#5de37a",
-      "#18dcff",
-      "#6c5ce7",
-      "#f368e0",
-      "#54a0ff"
-    ];
+    let cards = [];
+    let flipped = [];
+    let matchedIndices = new Set();
+    let locked = false;
+    let startTime = 0;
+    let timer = null;
+    let finished = false;
 
-    const listEl = document.getElementById("list");
-    const resultEl = document.getElementById("result");
-    const pickButton = document.getElementById("pickButton");
-    const resetButton = document.getElementById("resetButton");
-    const fxCanvas = document.getElementById("fxCanvas");
-    const fxCtx = fxCanvas.getContext("2d");
-
-    let rolling = false;
-    let timerId = null;
-    let fxFrameId = null;
-    let particles = [];
-
-    function resizeFxCanvas() {
-      const ratio = window.devicePixelRatio || 1;
-      const width = window.innerWidth;
-      const height = window.innerHeight;
-      fxCanvas.width = Math.floor(width * ratio);
-      fxCanvas.height = Math.floor(height * ratio);
-      fxCanvas.style.width = `${width}px`;
-      fxCanvas.style.height = `${height}px`;
-      fxCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
     }
 
-    function createParticle(x, y, speed, angle, color) {
+    function formatSeconds(total) {
+      const m = String(Math.floor(total / 60)).padStart(2, "0");
+      const s = String(total % 60).padStart(2, "0");
+      return `${m}:${s}`;
+    }
+
+    function updateStatus() {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const totalPairs = cards.length / 2;
+      const foundPairs = matchedIndices.size / 2;
+      statusEl.textContent = `카드 ${cards.length}장 (${totalPairs}쌍) | 맞춘 쌍 ${foundPairs}/${totalPairs} | 경과 시간 ${formatSeconds(elapsed)}`;
+    }
+
+    function setMessage(text) {
+      messageEl.textContent = text;
+    }
+
+    async function loadImages() {
+      const res = await fetch("/api/cuties", { cache: "no-store" });
+      if (!res.ok) {
+        throw new Error("이미지 목록을 불러오지 못했습니다.");
+      }
+      const data = await res.json();
       return {
-        x,
-        y,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        life: 80 + Math.random() * 40,
-        age: 0,
-        size: 2 + Math.random() * 4,
-        color,
-        spin: (Math.random() - 0.5) * 0.35
+        images: (data.images || []).slice(0, MAX_PAIRS),
+        backgroundUrl: data.background_url || null,
       };
     }
 
-    function burst(x, y, count = 80, power = 6.8) {
-      for (let i = 0; i < count; i += 1) {
-        const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.2;
-        const speed = power * (0.35 + Math.random() * 0.8);
-        const color = palette[Math.floor(Math.random() * palette.length)];
-        particles.push(createParticle(x, y, speed, angle, color));
-      }
-      if (!fxFrameId) {
-        animateParticles();
+    function stopTimer() {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
       }
     }
 
-    function animateParticles() {
-      fxCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-      particles = particles.filter((p) => p.age < p.life);
-
-      for (const p of particles) {
-        p.age += 1;
-        p.vy += 0.07;
-        p.vx *= 0.993;
-        p.vy *= 0.995;
-        p.x += p.vx;
-        p.y += p.vy;
-
-        const alpha = Math.max(0, 1 - p.age / p.life);
-        fxCtx.save();
-        fxCtx.globalAlpha = alpha;
-        fxCtx.translate(p.x, p.y);
-        fxCtx.rotate((p.age * p.spin) / 3);
-        fxCtx.fillStyle = p.color;
-        fxCtx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 1.6);
-        fxCtx.restore();
-      }
-
-      if (particles.length > 0) {
-        fxFrameId = window.requestAnimationFrame(animateParticles);
-      } else {
-        fxFrameId = null;
-      }
+    function startTimer() {
+      stopTimer();
+      startTime = Date.now();
+      updateStatus();
+      timer = setInterval(updateStatus, 250);
     }
 
-    function launchFireworks() {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      burst(w * 0.25, h * 0.32, 70, 7.1);
-      window.setTimeout(() => burst(w * 0.75, h * 0.34, 76, 7.3), 120);
-      window.setTimeout(() => burst(w * 0.5, h * 0.24, 96, 7.8), 240);
-      window.setTimeout(() => burst(w * (0.25 + Math.random() * 0.5), h * (0.2 + Math.random() * 0.25), 82, 7.0), 420);
+    function createTile(card, index) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "tile";
+      btn.dataset.index = String(index);
+
+      const inner = document.createElement("div");
+      inner.className = "tile-inner";
+
+      const back = document.createElement("div");
+      back.className = "tile-face tile-back";
+      back.textContent = "?";
+
+      const front = document.createElement("div");
+      front.className = "tile-face tile-front";
+
+      const img = document.createElement("img");
+      img.alt = card.name;
+      img.src = card.url;
+      front.appendChild(img);
+
+      inner.appendChild(back);
+      inner.appendChild(front);
+      btn.appendChild(inner);
+      btn.addEventListener("click", () => flipTile(index));
+      return btn;
     }
 
-    function resetFireworks() {
-      particles = [];
-      if (fxFrameId) {
-        window.cancelAnimationFrame(fxFrameId);
-        fxFrameId = null;
-      }
-      fxCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-    }
+    function renderBoard() {
+      boardEl.innerHTML = "";
+      boardEl.style.gridTemplateColumns = cards.length >= 10
+        ? "repeat(5, minmax(90px, 1fr))"
+        : "repeat(4, minmax(90px, 1fr))";
 
-    function renderList(activeIndex = -1) {
-      listEl.innerHTML = "";
-      options.forEach((name, idx) => {
-        const row = document.createElement("div");
-        row.className = "item" + (idx === activeIndex ? " active" : "");
-        if (idx === activeIndex) {
-          row.style.setProperty("--accent", palette[Math.floor(Math.random() * palette.length)]);
-        }
-        row.textContent = name;
-        listEl.appendChild(row);
+      cards.forEach((card, index) => {
+        boardEl.appendChild(createTile(card, index));
       });
     }
 
-    function setRollingState(enabled) {
-      document.body.classList.toggle("rolling", enabled);
+    function getTile(index) {
+      return boardEl.querySelector(`.tile[data-index="${index}"]`);
     }
 
-    function showWinnerText(text) {
-      resultEl.classList.remove("winner");
-      void resultEl.offsetWidth;
-      resultEl.textContent = text;
-      resultEl.classList.add("winner");
+    function flipTile(index) {
+      if (locked || finished || matchedIndices.has(index) || flipped.includes(index)) {
+        return;
+      }
+
+      const tile = getTile(index);
+      if (!tile) return;
+
+      tile.classList.add("flipped");
+      flipped.push(index);
+
+      if (flipped.length === 2) {
+        locked = true;
+        window.setTimeout(checkMatch, 800);
+      }
     }
 
-    function startRoll() {
-      if (rolling) return;
+    function checkMatch() {
+      const [a, b] = flipped;
+      const tileA = getTile(a);
+      const tileB = getTile(b);
+      const same = cards[a].name === cards[b].name;
 
-      rolling = true;
-      pickButton.disabled = true;
-      setRollingState(true);
-      resultEl.classList.remove("winner");
-      resultEl.textContent = "돌리는 중...";
+      if (same) {
+        matchedIndices.add(a);
+        matchedIndices.add(b);
+        tileA?.classList.add("matched");
+        tileB?.classList.add("matched");
+        tileA?.setAttribute("disabled", "true");
+        tileB?.setAttribute("disabled", "true");
+      } else {
+        tileA?.classList.remove("flipped");
+        tileB?.classList.remove("flipped");
+      }
 
-      let step = 0;
-      const maxStep = 34;
+      flipped = [];
+      locked = false;
+      updateStatus();
 
-      function animate() {
-        if (step < maxStep) {
-          const idx = Math.floor(Math.random() * options.length);
-          renderList(idx);
+      if (matchedIndices.size === cards.length) {
+        finished = true;
+        stopTimer();
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        setMessage(`완료! 소요 시간: ${formatSeconds(elapsed)}`);
+      }
+    }
 
-          step += 1;
-          const interval = 36 + step * 7;
-          timerId = window.setTimeout(animate, interval);
+    async function startGame() {
+      try {
+        setMessage("");
+        const { images, backgroundUrl } = await loadImages();
+        if (backgroundUrl) {
+          document.body.style.setProperty("--bg-image", `url("${backgroundUrl}")`);
+        } else {
+          document.body.style.removeProperty("--bg-image");
+        }
+        if (images.length < 2) {
+          statusEl.textContent = "이미지 2장 이상이 필요합니다.";
+          setMessage("바탕화면 cuties 폴더 또는 assets/cuties 폴더에 이미지를 넣어주세요.");
+          boardEl.innerHTML = "";
+          stopTimer();
           return;
         }
 
-        const winnerIndex = Math.floor(Math.random() * options.length);
-        renderList(winnerIndex);
-        showWinnerText(`오늘의 선택: ${options[winnerIndex]}`);
-        launchFireworks();
+        cards = images.flatMap((img) => [{ ...img }, { ...img }]);
+        shuffle(cards);
+        flipped = [];
+        matchedIndices = new Set();
+        locked = false;
+        finished = false;
 
-        rolling = false;
-        pickButton.disabled = false;
-        setRollingState(false);
-        timerId = null;
+        renderBoard();
+        startTimer();
+      } catch (err) {
+        statusEl.textContent = "게임을 시작할 수 없습니다.";
+        setMessage(err instanceof Error ? err.message : String(err));
+        boardEl.innerHTML = "";
+        stopTimer();
       }
-
-      animate();
     }
 
-    function reset() {
-      if (timerId !== null) {
-        window.clearTimeout(timerId);
-        timerId = null;
-      }
-
-      rolling = false;
-      pickButton.disabled = false;
-      setRollingState(false);
-      resultEl.classList.remove("winner");
-      renderList(-1);
-      resultEl.textContent = "추첨 버튼을 눌러주세요";
-      resetFireworks();
-    }
-
-    pickButton.addEventListener("click", startRoll);
-    resetButton.addEventListener("click", reset);
-    window.addEventListener("resize", resizeFxCanvas);
-
-    function init() {
-      resizeFxCanvas();
-      renderList();
-    }
-
-    init();
+    restartBtn.addEventListener("click", startGame);
+    startGame();
   </script>
 </body>
 </html>
