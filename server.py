@@ -90,6 +90,14 @@ class AppHandler(SimpleHTTPRequestHandler):
         parsed = urlparse(self.path)
         path = unquote(parsed.path)
 
+        if path in {"/", "/index.html"}:
+            self.path = "/index.html"
+            return super().do_GET()
+
+        if path in {"/game", "/game/"}:
+            self.path = "/game.html"
+            return super().do_GET()
+
         if path == "/api/cuties":
             self._send_json({
                 "images": self._list_cuties(),

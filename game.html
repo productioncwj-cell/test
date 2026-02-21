@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>같은 그림 찾기 게임</title>
+  <style>
+    :root {
+      --bg-a: #f4f8ff;
+      --bg-b: #dfeeff;
+      --surface: #ffffff;
+      --line: #d3e2f7;
+      --text: #1d2b43;
+      --muted: #5a6f8b;
+      --primary: #2a69d1;
+      --primary-dark: #1e4f9f;
+      --ok: #1b8b4b;
+      --card-back: #dbe7fa;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% 12%, #ffe39b88 0%, transparent 32%),
+        radial-gradient(circle at 85% 10%, #9ee7ff88 0%, transparent 30%),
+        linear-gradient(165deg, var(--bg-a), var(--bg-b));
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image: var(--bg-image);
+      background-size: cover;
+      background-position: center;
+      opacity: 0.6;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .wrap {
+      width: min(980px, 100%);
+      background: color-mix(in srgb, var(--surface) 86%, #f5f9ff);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: 0 16px 40px rgba(20, 52, 100, 0.16);
+      padding: 18px;
+      position: relative;
+      z-index: 1;
+    }
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    h1 { font-size: clamp(1.2rem, 2.4vw, 1.7rem); margin: 0; }
+    .status { color: var(--muted); font-weight: 700; font-size: 0.98rem; }
+    .controls { display: flex; gap: 8px; flex-wrap: wrap; }
+    button, .link-btn {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #restartBtn { background: linear-gradient(180deg, var(--primary), var(--primary-dark)); color: #fff; }
+    .link-btn { background: #ecf2fb; color: var(--primary-dark); }
+    .board { display: grid; grid-template-columns: repeat(5, minmax(90px, 1fr)); gap: 10px; }
+    .tile {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      border: none;
+      padding: 0;
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      background: transparent;
+      perspective: 900px;
+    }
+    .tile[disabled] { cursor: default; }
+    .tile-inner { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform 220ms ease; }
+    .tile.flipped .tile-inner, .tile.matched .tile-inner { transform: rotateY(180deg); }
+    .tile-face { position: absolute; inset: 0; backface-visibility: hidden; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+    .tile-back {
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #eef4ff, var(--card-back));
+      font-weight: 900;
+      color: #44648f;
+      font-size: clamp(1rem, 2.8vw, 1.5rem);
+    }
+    .tile-front { transform: rotateY(180deg); background: #fff; }
+    .tile-front img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .tile.matched { outline: 2px solid color-mix(in srgb, var(--ok) 45%, #ffffff); }
+    .message { margin-top: 12px; font-weight: 700; color: var(--primary-dark); min-height: 1.2em; }
+    @media (max-width: 760px) { .board { grid-template-columns: repeat(4, minmax(68px, 1fr)); } }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="top">
+      <h1>같은 그림 찾기 게임</h1>
+      <div class="controls">
+        <a class="link-btn" href="/">맛집 추천</a>
+        <button id="restartBtn" type="button">다시 시작</button>
+      </div>
+      <div id="status" class="status">로딩 중...</div>
+    </div>
+
+    <section id="board" class="board" aria-label="게임 보드"></section>
+    <div id="message" class="message"></div>
+  </main>
+
+  <script>
+    const MAX_PAIRS = 10;
+    const STATIC_MANIFEST_URL = "assets/cuties/manifest.json";
+    const boardEl = document.getElementById("board");
+    const statusEl = document.getElementById("status");
+    const messageEl = document.getElementById("message");
+    const restartBtn = document.getElementById("restartBtn");
+
+    let cards = [];
+    let flipped = [];
+    let matchedIndices = new Set();
+    let locked = false;
+    let startTime = 0;
+    let timer = null;
+    let finished = false;
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+    }
+
+    function formatSeconds(total) {
+      const m = String(Math.floor(total / 60)).padStart(2, "0");
+      const s = String(total % 60).padStart(2, "0");
+      return `${m}:${s}`;
+    }
+
+    function updateStatus() {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const totalPairs = cards.length / 2;
+      const foundPairs = matchedIndices.size / 2;
+      statusEl.textContent = `카드 ${cards.length}장 (${totalPairs}쌍) | 맞춘 쌍 ${foundPairs}/${totalPairs} | 경과 시간 ${formatSeconds(elapsed)}`;
+    }
+
+    function setMessage(text) { messageEl.textContent = text; }
+
+    async function loadImages() {
+      try {
+        const res = await fetch("/api/cuties", { cache: "no-store" });
+        if (!res.ok) throw new Error("api");
+        const data = await res.json();
+        return { images: (data.images || []).slice(0, MAX_PAIRS), backgroundUrl: data.background_url || null };
+      } catch (_) {
+        const res = await fetch(STATIC_MANIFEST_URL, { cache: "no-store" });
+        if (!res.ok) throw new Error("이미지 목록을 불러오지 못했습니다.");
+        const data = await res.json();
+        return { images: (data.images || []).slice(0, MAX_PAIRS), backgroundUrl: data.background_url || null };
+      }
+    }
+
+    function stopTimer() { if (timer) { clearInterval(timer); timer = null; } }
+    function startTimer() { stopTimer(); startTime = Date.now(); updateStatus(); timer = setInterval(updateStatus, 250); }
+
+    function createTile(card, index) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "tile";
+      btn.dataset.index = String(index);
+
+      const inner = document.createElement("div");
+      inner.className = "tile-inner";
+
+      const back = document.createElement("div");
+      back.className = "tile-face tile-back";
+      back.textContent = "?";
+
+      const front = document.createElement("div");
+      front.className = "tile-face tile-front";
+
+      const img = document.createElement("img");
+      img.alt = card.name;
+      img.src = card.url;
+      front.appendChild(img);
+
+      inner.appendChild(back);
+      inner.appendChild(front);
+      btn.appendChild(inner);
+      btn.addEventListener("click", () => flipTile(index));
+      return btn;
+    }
+
+    function renderBoard() {
+      boardEl.innerHTML = "";
+      boardEl.style.gridTemplateColumns = cards.length >= 10 ? "repeat(5, minmax(90px, 1fr))" : "repeat(4, minmax(90px, 1fr))";
+      cards.forEach((card, index) => boardEl.appendChild(createTile(card, index)));
+    }
+
+    function getTile(index) { return boardEl.querySelector(`.tile[data-index="${index}"]`); }
+
+    function flipTile(index) {
+      if (locked || finished || matchedIndices.has(index) || flipped.includes(index)) return;
+      const tile = getTile(index);
+      if (!tile) return;
+      tile.classList.add("flipped");
+      flipped.push(index);
+      if (flipped.length === 2) { locked = true; window.setTimeout(checkMatch, 800); }
+    }
+
+    function checkMatch() {
+      const [a, b] = flipped;
+      const tileA = getTile(a);
+      const tileB = getTile(b);
+      const same = cards[a].name === cards[b].name;
+
+      if (same) {
+        matchedIndices.add(a);
+        matchedIndices.add(b);
+        tileA?.classList.add("matched");
+        tileB?.classList.add("matched");
+        tileA?.setAttribute("disabled", "true");
+        tileB?.setAttribute("disabled", "true");
+      } else {
+        tileA?.classList.remove("flipped");
+        tileB?.classList.remove("flipped");
+      }
+
+      flipped = [];
+      locked = false;
+      updateStatus();
+
+      if (matchedIndices.size === cards.length) {
+        finished = true;
+        stopTimer();
+        setMessage(`완료! 소요 시간: ${formatSeconds(Math.floor((Date.now() - startTime) / 1000))}`);
+      }
+    }
+
+    async function startGame() {
+      try {
+        setMessage("");
+        const { images, backgroundUrl } = await loadImages();
+        if (backgroundUrl) document.body.style.setProperty("--bg-image", `url("${backgroundUrl}")`);
+        else document.body.style.removeProperty("--bg-image");
+
+        if (images.length < 2) {
+          statusEl.textContent = "이미지 2장 이상이 필요합니다.";
+          setMessage("바탕화면 cuties 폴더 또는 assets/cuties 폴더에 이미지를 넣어주세요.");
+          boardEl.innerHTML = "";
+          stopTimer();
+          return;
+        }
+
+        cards = images.flatMap((img) => [{ ...img }, { ...img }]);
+        shuffle(cards);
+        flipped = [];
+        matchedIndices = new Set();
+        locked = false;
+        finished = false;
+
+        renderBoard();
+        startTimer();
+      } catch (err) {
+        statusEl.textContent = "게임을 시작할 수 없습니다.";
+        setMessage(err instanceof Error ? err.message : String(err));
+        boardEl.innerHTML = "";
+        stopTimer();
+      }
+    }
+
+    restartBtn.addEventListener("click", startGame);
+    startGame();
+  </script>
+</body>
+</html>
