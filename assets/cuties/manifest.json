@@ -1,0 +1,33 @@
+{
+  "images": [
+    {
+      "name": "다람.png",
+      "url": "assets/cuties/다람.png"
+    },
+    {
+      "name": "리카르도.png",
+      "url": "assets/cuties/리카르도.png"
+    },
+    {
+      "name": "바닐라.png",
+      "url": "assets/cuties/바닐라.png"
+    },
+    {
+      "name": "벤.png",
+      "url": "assets/cuties/벤.png"
+    },
+    {
+      "name": "사이다.png",
+      "url": "assets/cuties/사이다.png"
+    },
+    {
+      "name": "애플.png",
+      "url": "assets/cuties/애플.png"
+    },
+    {
+      "name": "케첩.png",
+      "url": "assets/cuties/케첩.png"
+    }
+  ],
+  "background_url": "assets/cuties/bg.png"
+}
