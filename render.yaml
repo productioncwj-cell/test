@@ -1,0 +1,7 @@
+﻿services:
+  - type: web
+    name: lunch-picker
+    runtime: python
+    plan: free
+    buildCommand: ""
+    startCommand: python server.py
