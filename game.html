@@ -259,7 +259,7 @@
     }
 
     function resolveAssetUrl(url) {
-      return new URL(encodeURI(url), window.location.href).toString();
+      return new URL(url, window.location.href).toString();
     }
 
     async function loadImages() {
