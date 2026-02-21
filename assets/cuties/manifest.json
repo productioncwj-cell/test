@@ -1,6 +1,18 @@
 {
   "images": [
     {
+      "name": "01도루욱.png",
+      "url": "assets/cuties/01도루욱.png"
+    },
+    {
+      "name": "02톰.png",
+      "url": "assets/cuties/02톰.png"
+    },
+    {
+      "name": "image.png",
+      "url": "assets/cuties/image.png"
+    },
+    {
       "name": "다람.png",
       "url": "assets/cuties/다람.png"
     },

@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
@@ -19,6 +19,7 @@
     }
 
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       min-height: 100vh;
@@ -34,6 +35,7 @@
       position: relative;
       overflow: hidden;
     }
+
     body::before {
       content: "";
       position: fixed;
@@ -45,6 +47,7 @@
       pointer-events: none;
       z-index: 0;
     }
+
     .wrap {
       width: min(980px, 100%);
       background: color-mix(in srgb, var(--surface) 86%, #f5f9ff);
@@ -55,6 +58,7 @@
       position: relative;
       z-index: 1;
     }
+
     .top {
       display: flex;
       justify-content: space-between;
@@ -63,10 +67,26 @@
       margin-bottom: 14px;
       flex-wrap: wrap;
     }
-    h1 { font-size: clamp(1.2rem, 2.4vw, 1.7rem); margin: 0; }
-    .status { color: var(--muted); font-weight: 700; font-size: 0.98rem; }
-    .controls { display: flex; gap: 8px; flex-wrap: wrap; }
-    button, .link-btn {
+
+    h1 {
+      font-size: clamp(1.2rem, 2.4vw, 1.7rem);
+      margin: 0;
+    }
+
+    .status {
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 0.98rem;
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button,
+    .link-btn {
       border: none;
       border-radius: 10px;
       padding: 10px 14px;
@@ -78,9 +98,23 @@
       align-items: center;
       justify-content: center;
     }
-    #restartBtn { background: linear-gradient(180deg, var(--primary), var(--primary-dark)); color: #fff; }
-    .link-btn { background: #ecf2fb; color: var(--primary-dark); }
-    .board { display: grid; grid-template-columns: repeat(5, minmax(90px, 1fr)); gap: 10px; }
+
+    #restartBtn {
+      background: linear-gradient(180deg, var(--primary), var(--primary-dark));
+      color: #fff;
+    }
+
+    .link-btn {
+      background: #ecf2fb;
+      color: var(--primary-dark);
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(90px, 1fr));
+      gap: 10px;
+    }
+
     .tile {
       position: relative;
       aspect-ratio: 1 / 1;
@@ -92,10 +126,32 @@
       background: transparent;
       perspective: 900px;
     }
-    .tile[disabled] { cursor: default; }
-    .tile-inner { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform 220ms ease; }
-    .tile.flipped .tile-inner, .tile.matched .tile-inner { transform: rotateY(180deg); }
-    .tile-face { position: absolute; inset: 0; backface-visibility: hidden; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+
+    .tile[disabled] {
+      cursor: default;
+    }
+
+    .tile-inner {
+      position: absolute;
+      inset: 0;
+      transform-style: preserve-3d;
+      transition: transform 220ms ease;
+    }
+
+    .tile.flipped .tile-inner,
+    .tile.matched .tile-inner {
+      transform: rotateY(180deg);
+    }
+
+    .tile-face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
     .tile-back {
       display: grid;
       place-items: center;
@@ -104,11 +160,35 @@
       color: #44648f;
       font-size: clamp(1rem, 2.8vw, 1.5rem);
     }
-    .tile-front { transform: rotateY(180deg); background: #fff; }
-    .tile-front img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .tile.matched { outline: 2px solid color-mix(in srgb, var(--ok) 45%, #ffffff); }
-    .message { margin-top: 12px; font-weight: 700; color: var(--primary-dark); min-height: 1.2em; }
-    @media (max-width: 760px) { .board { grid-template-columns: repeat(4, minmax(68px, 1fr)); } }
+
+    .tile-front {
+      transform: rotateY(180deg);
+      background: #fff;
+    }
+
+    .tile-front img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .tile.matched {
+      outline: 2px solid color-mix(in srgb, var(--ok) 45%, #ffffff);
+    }
+
+    .message {
+      margin-top: 12px;
+      font-weight: 700;
+      color: var(--primary-dark);
+      min-height: 1.2em;
+    }
+
+    @media (max-width: 760px) {
+      .board {
+        grid-template-columns: repeat(4, minmax(68px, 1fr));
+      }
+    }
   </style>
 </head>
 <body>
@@ -162,24 +242,55 @@
       statusEl.textContent = `카드 ${cards.length}장 (${totalPairs}쌍) | 맞춘 쌍 ${foundPairs}/${totalPairs} | 경과 시간 ${formatSeconds(elapsed)}`;
     }
 
-    function setMessage(text) { messageEl.textContent = text; }
+    function setMessage(text) {
+      messageEl.textContent = text;
+    }
+
+    function toTenImages(images) {
+      if (images.length >= MAX_PAIRS) {
+        return images.slice(0, MAX_PAIRS);
+      }
+      const filled = [...images];
+      while (filled.length < MAX_PAIRS) {
+        const pick = images[Math.floor(Math.random() * images.length)];
+        filled.push({ ...pick });
+      }
+      return filled;
+    }
 
     async function loadImages() {
       try {
         const res = await fetch("/api/cuties", { cache: "no-store" });
         if (!res.ok) throw new Error("api");
         const data = await res.json();
-        return { images: (data.images || []).slice(0, MAX_PAIRS), backgroundUrl: data.background_url || null };
+        return {
+          images: toTenImages(data.images || []),
+          backgroundUrl: data.background_url || null,
+        };
       } catch (_) {
         const res = await fetch(STATIC_MANIFEST_URL, { cache: "no-store" });
         if (!res.ok) throw new Error("이미지 목록을 불러오지 못했습니다.");
         const data = await res.json();
-        return { images: (data.images || []).slice(0, MAX_PAIRS), backgroundUrl: data.background_url || null };
+        return {
+          images: toTenImages(data.images || []),
+          backgroundUrl: data.background_url || null,
+        };
       }
     }
 
-    function stopTimer() { if (timer) { clearInterval(timer); timer = null; } }
-    function startTimer() { stopTimer(); startTime = Date.now(); updateStatus(); timer = setInterval(updateStatus, 250); }
+    function stopTimer() {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+    }
+
+    function startTimer() {
+      stopTimer();
+      startTime = Date.now();
+      updateStatus();
+      timer = setInterval(updateStatus, 250);
+    }
 
     function createTile(card, index) {
       const btn = document.createElement("button");
@@ -199,7 +310,7 @@
 
       const img = document.createElement("img");
       img.alt = card.name;
-      img.src = card.url;
+      img.src = encodeURI(card.url);
       front.appendChild(img);
 
       inner.appendChild(back);
@@ -211,11 +322,13 @@
 
     function renderBoard() {
       boardEl.innerHTML = "";
-      boardEl.style.gridTemplateColumns = cards.length >= 10 ? "repeat(5, minmax(90px, 1fr))" : "repeat(4, minmax(90px, 1fr))";
+      boardEl.style.gridTemplateColumns = "repeat(5, minmax(90px, 1fr))";
       cards.forEach((card, index) => boardEl.appendChild(createTile(card, index)));
     }
 
-    function getTile(index) { return boardEl.querySelector(`.tile[data-index="${index}"]`); }
+    function getTile(index) {
+      return boardEl.querySelector(`.tile[data-index="${index}"]`);
+    }
 
     function flipTile(index) {
       if (locked || finished || matchedIndices.has(index) || flipped.includes(index)) return;
@@ -223,7 +336,10 @@
       if (!tile) return;
       tile.classList.add("flipped");
       flipped.push(index);
-      if (flipped.length === 2) { locked = true; window.setTimeout(checkMatch, 800); }
+      if (flipped.length === 2) {
+        locked = true;
+        window.setTimeout(checkMatch, 800);
+      }
     }
 
     function checkMatch() {
@@ -251,7 +367,8 @@
       if (matchedIndices.size === cards.length) {
         finished = true;
         stopTimer();
-        setMessage(`완료! 소요 시간: ${formatSeconds(Math.floor((Date.now() - startTime) / 1000))}`);
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        setMessage(`완료! 소요 시간: ${formatSeconds(elapsed)}`);
       }
     }
 
@@ -259,8 +376,11 @@
       try {
         setMessage("");
         const { images, backgroundUrl } = await loadImages();
-        if (backgroundUrl) document.body.style.setProperty("--bg-image", `url("${backgroundUrl}")`);
-        else document.body.style.removeProperty("--bg-image");
+        if (backgroundUrl) {
+          document.body.style.setProperty("--bg-image", `url("${encodeURI(backgroundUrl)}")`);
+        } else {
+          document.body.style.removeProperty("--bg-image");
+        }
 
         if (images.length < 2) {
           statusEl.textContent = "이미지 2장 이상이 필요합니다.";
