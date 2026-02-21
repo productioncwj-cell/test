@@ -2,11 +2,11 @@
   "images": [
     {
       "name": "01도루욱.png",
-      "url": "assets/cuties/01도루욱.png"
+      "url": "assets/cuties/01%EB%8F%84%EB%A3%A8%EC%9A%B1.png"
     },
     {
       "name": "02톰.png",
-      "url": "assets/cuties/02톰.png"
+      "url": "assets/cuties/02%ED%86%B0.png"
     },
     {
       "name": "image.png",
@@ -14,31 +14,31 @@
     },
     {
       "name": "다람.png",
-      "url": "assets/cuties/다람.png"
+      "url": "assets/cuties/%EB%8B%A4%EB%9E%8C.png"
     },
     {
       "name": "리카르도.png",
-      "url": "assets/cuties/리카르도.png"
+      "url": "assets/cuties/%EB%A6%AC%EC%B9%B4%EB%A5%B4%EB%8F%84.png"
     },
     {
       "name": "바닐라.png",
-      "url": "assets/cuties/바닐라.png"
+      "url": "assets/cuties/%EB%B0%94%EB%8B%90%EB%9D%BC.png"
     },
     {
       "name": "벤.png",
-      "url": "assets/cuties/벤.png"
+      "url": "assets/cuties/%EB%B2%A4.png"
     },
     {
       "name": "사이다.png",
-      "url": "assets/cuties/사이다.png"
+      "url": "assets/cuties/%EC%82%AC%EC%9D%B4%EB%8B%A4.png"
     },
     {
       "name": "애플.png",
-      "url": "assets/cuties/애플.png"
+      "url": "assets/cuties/%EC%95%A0%ED%94%8C.png"
     },
     {
       "name": "케첩.png",
-      "url": "assets/cuties/케첩.png"
+      "url": "assets/cuties/%EC%BC%80%EC%B2%A9.png"
     }
   ],
   "background_url": "assets/cuties/bg.png"
