@@ -144,7 +144,7 @@
 
     .actions {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-columns: 1fr 1fr;
       gap: 10px;
     }
 
@@ -174,11 +174,6 @@
     #resetButton {
       background: #ecf2fb;
       color: var(--primary-2);
-    }
-
-    #gameButton {
-      background: #fff2de;
-      color: #8b4d00;
     }
 
     body.rolling {
@@ -227,7 +222,6 @@
       .item { font-size: 0.94rem; }
       .result { font-size: 1.08rem; }
       .orb { width: 24vmin; }
-      .actions { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -253,7 +247,6 @@
     <div class="actions">
       <button id="pickButton" type="button">추첨</button>
       <button id="resetButton" type="button">초기화</button>
-      <button id="gameButton" type="button">같은 그림 찾기</button>
     </div>
   </main>
 
@@ -286,7 +279,6 @@
     const resultEl = document.getElementById("result");
     const pickButton = document.getElementById("pickButton");
     const resetButton = document.getElementById("resetButton");
-    const gameButton = document.getElementById("gameButton");
     const fxCanvas = document.getElementById("fxCanvas");
     const fxCtx = fxCanvas.getContext("2d");
 
@@ -457,9 +449,6 @@
 
     pickButton.addEventListener("click", startRoll);
     resetButton.addEventListener("click", reset);
-    gameButton.addEventListener("click", () => {
-      window.location.href = "/game";
-    });
     window.addEventListener("resize", resizeFxCanvas);
 
     function init() {
