@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>媛숈? 洹몃┝ 李얘린 寃뚯엫</title>
+  <title>같은 그림 찾기 게임</title>
   <style>
     :root {
       --bg-a: #f4f8ff;
@@ -184,14 +184,14 @@
 <body>
   <main class="wrap">
     <div class="top">
-      <h1>媛숈? 洹몃┝ 李얘린 寃뚯엫</h1>
+      <h1>같은 그림 찾기 게임</h1>
       <div class="controls">
-        <button id="restartBtn" type="button">?ㅼ떆 ?쒖옉</button>
+        <button id="restartBtn" type="button">다시 시작</button>
       </div>
-      <div id="status" class="status">濡쒕뵫 以?..</div>
+      <div id="status" class="status">로딩 중...</div>
     </div>
 
-    <section id="board" class="board" aria-label="寃뚯엫 蹂대뱶"></section>
+    <section id="board" class="board" aria-label="게임 보드"></section>
     <div id="message" class="message"></div>
   </main>
 
@@ -228,7 +228,7 @@
       const elapsed = Math.floor((Date.now() - startTime) / 1000);
       const totalPairs = cards.length / 2;
       const foundPairs = matchedIndices.size / 2;
-      statusEl.textContent = `移대뱶 ${cards.length}??(${totalPairs}?? | 留욎텣 ??${foundPairs}/${totalPairs} | 寃쎄낵 ?쒓컙 ${formatSeconds(elapsed)}`;
+      statusEl.textContent = `카드 ${cards.length}장 (${totalPairs}쌍) | 맞춘 쌍 ${foundPairs}/${totalPairs} | 경과 시간 ${formatSeconds(elapsed)}`;
     }
 
     function setMessage(text) {
@@ -238,9 +238,7 @@
     async function loadImages() {
       try {
         const res = await fetch("/api/cuties", { cache: "no-store" });
-        if (!res.ok) {
-          throw new Error("api error");
-        }
+        if (!res.ok) throw new Error("api error");
         const data = await res.json();
         return {
           images: (data.images || []).slice(0, MAX_PAIRS),
@@ -249,7 +247,7 @@
       } catch (_) {
         const staticRes = await fetch(STATIC_MANIFEST_URL, { cache: "no-store" });
         if (!staticRes.ok) {
-          throw new Error("?대?吏 紐⑸줉??遺덈윭?ㅼ? 紐삵뻽?듬땲??");
+          throw new Error("이미지 목록을 불러오지 못했습니다.");
         }
         const data = await staticRes.json();
         return {
@@ -307,9 +305,7 @@
         ? "repeat(5, minmax(90px, 1fr))"
         : "repeat(4, minmax(90px, 1fr))";
 
-      cards.forEach((card, index) => {
-        boardEl.appendChild(createTile(card, index));
-      });
+      cards.forEach((card, index) => boardEl.appendChild(createTile(card, index)));
     }
 
     function getTile(index) {
@@ -317,9 +313,7 @@
     }
 
     function flipTile(index) {
-      if (locked || finished || matchedIndices.has(index) || flipped.includes(index)) {
-        return;
-      }
+      if (locked || finished || matchedIndices.has(index) || flipped.includes(index)) return;
 
       const tile = getTile(index);
       if (!tile) return;
@@ -359,7 +353,7 @@
         finished = true;
         stopTimer();
         const elapsed = Math.floor((Date.now() - startTime) / 1000);
-        setMessage(`?꾨즺! ?뚯슂 ?쒓컙: ${formatSeconds(elapsed)}`);
+        setMessage(`완료! 소요 시간: ${formatSeconds(elapsed)}`);
       }
     }
 
@@ -367,14 +361,16 @@
       try {
         setMessage("");
         const { images, backgroundUrl } = await loadImages();
+
         if (backgroundUrl) {
           document.body.style.setProperty("--bg-image", `url("${backgroundUrl}")`);
         } else {
           document.body.style.removeProperty("--bg-image");
         }
+
         if (images.length < 2) {
-          statusEl.textContent = "?대?吏 2???댁긽???꾩슂?⑸땲??";
-          setMessage("諛뷀깢?붾㈃ cuties ?대뜑 ?먮뒗 assets/cuties ?대뜑???대?吏瑜??ｌ뼱二쇱꽭??");
+          statusEl.textContent = "이미지 2장 이상이 필요합니다.";
+          setMessage("바탕화면 cuties 폴더 또는 assets/cuties 폴더에 이미지를 넣어주세요.");
           boardEl.innerHTML = "";
           stopTimer();
           return;
@@ -390,7 +386,7 @@
         renderBoard();
         startTimer();
       } catch (err) {
-        statusEl.textContent = "寃뚯엫???쒖옉?????놁뒿?덈떎.";
+        statusEl.textContent = "게임을 시작할 수 없습니다.";
         setMessage(err instanceof Error ? err.message : String(err));
         boardEl.innerHTML = "";
         stopTimer();
