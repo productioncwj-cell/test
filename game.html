@@ -247,6 +247,7 @@
     }
 
     function toTenImages(images) {
+      if (images.length === 0) return [];
       if (images.length >= MAX_PAIRS) {
         return images.slice(0, MAX_PAIRS);
       }
@@ -258,21 +259,54 @@
       return filled;
     }
 
+    function resolveAssetUrl(url) {
+      return new URL(encodeURI(url), window.location.href).toString();
+    }
+
+    function probeImage(url) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        let done = false;
+        const finish = (ok) => {
+          if (done) return;
+          done = true;
+          resolve(ok);
+        };
+        const timer = setTimeout(() => finish(false), 4000);
+        img.onload = () => {
+          clearTimeout(timer);
+          finish(true);
+        };
+        img.onerror = () => {
+          clearTimeout(timer);
+          finish(false);
+        };
+        img.src = resolveAssetUrl(url);
+      });
+    }
+
+    async function filterLoadableImages(images) {
+      const checks = await Promise.all(images.map((item) => probeImage(item.url)));
+      return images.filter((_, i) => checks[i]);
+    }
+
     async function loadImages() {
       try {
         const res = await fetch("/api/cuties", { cache: "no-store" });
         if (!res.ok) throw new Error("api");
         const data = await res.json();
+        const loaded = await filterLoadableImages(data.images || []);
         return {
-          images: toTenImages(data.images || []),
+          images: toTenImages(loaded),
           backgroundUrl: data.background_url || null,
         };
       } catch (_) {
         const res = await fetch(STATIC_MANIFEST_URL, { cache: "no-store" });
         if (!res.ok) throw new Error("이미지 목록을 불러오지 못했습니다.");
         const data = await res.json();
+        const loaded = await filterLoadableImages(data.images || []);
         return {
-          images: toTenImages(data.images || []),
+          images: toTenImages(loaded),
           backgroundUrl: data.background_url || null,
         };
       }
@@ -310,7 +344,7 @@
 
       const img = document.createElement("img");
       img.alt = card.name;
-      img.src = encodeURI(card.url);
+      img.src = resolveAssetUrl(card.url);
       front.appendChild(img);
 
       inner.appendChild(back);
@@ -377,7 +411,7 @@
         setMessage("");
         const { images, backgroundUrl } = await loadImages();
         if (backgroundUrl) {
-          document.body.style.setProperty("--bg-image", `url("${encodeURI(backgroundUrl)}")`);
+          document.body.style.setProperty("--bg-image", `url("${resolveAssetUrl(backgroundUrl)}")`);
         } else {
           document.body.style.removeProperty("--bg-image");
         }
