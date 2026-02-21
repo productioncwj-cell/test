@@ -48,6 +48,15 @@
       z-index: 0;
     }
 
+    .fx-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 2;
+    }
+
     .wrap {
       width: min(980px, 100%);
       background: color-mix(in srgb, var(--surface) 86%, #f5f9ff);
@@ -200,6 +209,7 @@
     <section id="board" class="board" aria-label="게임 보드"></section>
     <div id="message" class="message"></div>
   </main>
+  <canvas id="fxCanvas" class="fx-canvas" aria-hidden="true"></canvas>
 
   <script>
     const MAX_PAIRS = 10;
@@ -208,6 +218,8 @@
     const statusEl = document.getElementById("status");
     const messageEl = document.getElementById("message");
     const restartBtn = document.getElementById("restartBtn");
+    const fxCanvas = document.getElementById("fxCanvas");
+    const fxCtx = fxCanvas.getContext("2d");
 
     let cards = [];
     let flipped = [];
@@ -217,6 +229,8 @@
     let timer = null;
     let finished = false;
     let timerStarted = false;
+    let particles = [];
+    let fxFrameId = null;
 
     function shuffle(arr) {
       for (let i = arr.length - 1; i > 0; i -= 1) {
@@ -240,6 +254,75 @@
 
     function setMessage(text) {
       messageEl.textContent = text;
+    }
+
+    function resizeFxCanvas() {
+      const ratio = window.devicePixelRatio || 1;
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      fxCanvas.width = Math.floor(width * ratio);
+      fxCanvas.height = Math.floor(height * ratio);
+      fxCanvas.style.width = `${width}px`;
+      fxCanvas.style.height = `${height}px`;
+      fxCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
+
+    function createParticle(x, y, speed, angle, color) {
+      return {
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 80 + Math.random() * 40,
+        age: 0,
+        size: 2 + Math.random() * 4,
+        color,
+        spin: (Math.random() - 0.5) * 0.35,
+      };
+    }
+
+    function burst(x, y, count = 80, power = 6.8) {
+      const palette = ["#ff5f6d", "#ff9f43", "#ffd93d", "#5de37a", "#18dcff", "#6c5ce7", "#f368e0", "#54a0ff"];
+      for (let i = 0; i < count; i += 1) {
+        const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.2;
+        const speed = power * (0.35 + Math.random() * 0.8);
+        const color = palette[Math.floor(Math.random() * palette.length)];
+        particles.push(createParticle(x, y, speed, angle, color));
+      }
+      if (!fxFrameId) animateParticles();
+    }
+
+    function animateParticles() {
+      fxCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      particles = particles.filter((p) => p.age < p.life);
+      for (const p of particles) {
+        p.age += 1;
+        p.vy += 0.07;
+        p.vx *= 0.993;
+        p.vy *= 0.995;
+        p.x += p.vx;
+        p.y += p.vy;
+
+        const alpha = Math.max(0, 1 - p.age / p.life);
+        fxCtx.save();
+        fxCtx.globalAlpha = alpha;
+        fxCtx.translate(p.x, p.y);
+        fxCtx.rotate((p.age * p.spin) / 3);
+        fxCtx.fillStyle = p.color;
+        fxCtx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 1.6);
+        fxCtx.restore();
+      }
+
+      if (particles.length > 0) fxFrameId = window.requestAnimationFrame(animateParticles);
+      else fxFrameId = null;
+    }
+
+    function launchFireworks() {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      burst(w * 0.25, h * 0.32, 70, 7.1);
+      window.setTimeout(() => burst(w * 0.75, h * 0.34, 76, 7.3), 120);
+      window.setTimeout(() => burst(w * 0.5, h * 0.24, 96, 7.8), 240);
+      window.setTimeout(() => burst(w * (0.25 + Math.random() * 0.5), h * (0.2 + Math.random() * 0.25), 82, 7.0), 420);
     }
 
     function toTenImages(images) {
@@ -373,6 +456,7 @@
         stopTimer();
         const elapsed = Math.floor((Date.now() - startTime) / 1000);
         setMessage(`완료! 소요 시간: ${formatSeconds(elapsed)}`);
+        launchFireworks();
       }
     }
 
@@ -414,6 +498,8 @@
     }
 
     restartBtn.addEventListener("click", startGame);
+    window.addEventListener("resize", resizeFxCanvas);
+    resizeFxCanvas();
     startGame();
   </script>
 </body>
