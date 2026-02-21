@@ -216,6 +216,7 @@
     let startTime = 0;
     let timer = null;
     let finished = false;
+    let timerStarted = false;
 
     function shuffle(arr) {
       for (let i = arr.length - 1; i > 0; i -= 1) {
@@ -231,7 +232,7 @@
     }
 
     function updateStatus() {
-      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const elapsed = timerStarted ? Math.floor((Date.now() - startTime) / 1000) : 0;
       const totalPairs = cards.length / 2;
       const foundPairs = matchedIndices.size / 2;
       statusEl.textContent = `카드 ${cards.length}장 (${totalPairs}쌍) | 맞춘 쌍 ${foundPairs}/${totalPairs} | 경과 시간 ${formatSeconds(elapsed)}`;
@@ -286,6 +287,8 @@
     }
 
     function startTimer() {
+      if (timerStarted) return;
+      timerStarted = true;
       stopTimer();
       startTime = Date.now();
       updateStatus();
@@ -334,6 +337,7 @@
       if (locked || finished || matchedIndices.has(index) || flipped.includes(index)) return;
       const tile = getTile(index);
       if (!tile) return;
+      startTimer();
       tile.classList.add("flipped");
       flipped.push(index);
       if (flipped.length === 2) {
@@ -396,9 +400,11 @@
         matchedIndices = new Set();
         locked = false;
         finished = false;
+        timerStarted = false;
+        stopTimer();
 
         renderBoard();
-        startTimer();
+        updateStatus();
       } catch (err) {
         statusEl.textContent = "게임을 시작할 수 없습니다.";
         setMessage(err instanceof Error ? err.message : String(err));
